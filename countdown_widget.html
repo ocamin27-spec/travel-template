@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Відлік до поїздки</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+  }
+
+  .widget {
+    text-align: center;
+    width: 100%;
+    max-width: 480px;
+  }
+
+  .destination-input {
+    margin-bottom: 8px;
+  }
+
+  .destination-input input[type="text"] {
+    background: rgba(255,255,255,0.08);
+    border: 1px solid rgba(255,255,255,0.15);
+    border-radius: 12px;
+    color: white;
+    font-size: 22px;
+    font-weight: 600;
+    text-align: center;
+    padding: 8px 16px;
+    width: 100%;
+    outline: none;
+    transition: border-color 0.2s;
+  }
+  .destination-input input[type="text"]::placeholder { color: rgba(255,255,255,0.35); }
+  .destination-input input[type="text"]:focus { border-color: rgba(255,255,255,0.4); }
+
+  .plane-icon {
+    font-size: 48px;
+    margin: 12px 0 4px;
+    display: block;
+  }
+
+  .date-row {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    margin-bottom: 28px;
+  }
+  .date-row label {
+    color: rgba(255,255,255,0.5);
+    font-size: 13px;
+  }
+  .date-row input[type="date"] {
+    background: rgba(255,255,255,0.08);
+    border: 1px solid rgba(255,255,255,0.15);
+    border-radius: 8px;
+    color: white;
+    font-size: 14px;
+    padding: 6px 12px;
+    outline: none;
+    cursor: pointer;
+    color-scheme: dark;
+  }
+
+  .countdown-grid {
+    display: flex;
+    justify-content: center;
+    gap: 12px;
+    margin-bottom: 20px;
+    flex-wrap: wrap;
+  }
+
+  .unit-card {
+    background: rgba(255,255,255,0.07);
+    border: 1px solid rgba(255,255,255,0.12);
+    border-radius: 16px;
+    padding: 18px 14px 12px;
+    min-width: 80px;
+    flex: 1;
+    max-width: 100px;
+  }
+
+  .unit-number {
+    font-size: 40px;
+    font-weight: 700;
+    color: white;
+    line-height: 1;
+    display: block;
+    letter-spacing: -1px;
+  }
+
+  .unit-label {
+    font-size: 11px;
+    color: rgba(255,255,255,0.45);
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+    margin-top: 6px;
+    display: block;
+  }
+
+  .message {
+    color: rgba(255,255,255,0.55);
+    font-size: 14px;
+    margin-top: 4px;
+    min-height: 20px;
+  }
+
+  .arrived {
+    color: #a8e6cf;
+    font-size: 20px;
+    font-weight: 600;
+    margin-top: 8px;
+  }
+</style>
+</head>
+<body>
+<div class="widget">
+  <div class="destination-input">
+    <input type="text" id="destination" placeholder="✈️ Назва поїздки..." value="🌊 Барселона" />
+  </div>
+
+  <div class="date-row">
+    <label>Дата відльоту:</label>
+    <input type="date" id="tripDate" />
+  </div>
+
+  <div class="countdown-grid">
+    <div class="unit-card">
+      <span class="unit-number" id="days">--</span>
+      <span class="unit-label">Днів</span>
+    </div>
+    <div class="unit-card">
+      <span class="unit-number" id="hours">--</span>
+      <span class="unit-label">Годин</span>
+    </div>
+    <div class="unit-card">
+      <span class="unit-number" id="minutes">--</span>
+      <span class="unit-label">Хвилин</span>
+    </div>
+    <div class="unit-card">
+      <span class="unit-number" id="seconds">--</span>
+      <span class="unit-label">Секунд</span>
+    </div>
+  </div>
+
+  <div class="message" id="message">Встанови дату поїздки вище ⬆️</div>
+</div>
+
+<script>
+  const dateInput = document.getElementById('tripDate');
+
+  const saved = localStorage.getItem('tripDate');
+  if (saved) dateInput.value = saved;
+
+  dateInput.addEventListener('change', () => {
+    localStorage.setItem('tripDate', dateInput.value);
+  });
+
+  function update() {
+    const val = dateInput.value;
+    if (!val) {
+      ['days','hours','minutes','seconds'].forEach(id => document.getElementById(id).textContent = '--');
+      document.getElementById('message').textContent = 'Встанови дату поїздки ⬆️';
+      return;
+    }
+
+    const target = new Date(val + 'T00:00:00');
+    const now = new Date();
+    const diff = target - now;
+
+    const msg = document.getElementById('message');
+
+    if (diff <= 0) {
+      ['days','hours','minutes','seconds'].forEach(id => document.getElementById(id).textContent = '0');
+      msg.innerHTML = '<span class="arrived">🎉 Час їхати!</span>';
+      return;
+    }
+
+    const d = Math.floor(diff / 86400000);
+    const h = Math.floor((diff % 86400000) / 3600000);
+    const m = Math.floor((diff % 3600000) / 60000);
+    const s = Math.floor((diff % 60000) / 1000);
+
+    document.getElementById('days').textContent = String(d).padStart(2,'0');
+    document.getElementById('hours').textContent = String(h).padStart(2,'0');
+    document.getElementById('minutes').textContent = String(m).padStart(2,'0');
+    document.getElementById('seconds').textContent = String(s).padStart(2,'0');
+
+    if (d === 0) msg.textContent = '🔥 Вже завтра!';
+    else if (d <= 7) msg.textContent = `Ще трохи терпіння — вже скоро! 🌟`;
+    else if (d <= 30) msg.textContent = `Готуйся — до поїздки менше місяця! 🧳`;
+    else msg.textContent = `Мрій, плануй і насолоджуйся очікуванням ✨`;
+  }
+
+  update();
+  setInterval(update, 1000);
+</script>
+</body>
+</html>
